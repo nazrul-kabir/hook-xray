@@ -1,0 +1,4 @@
+{
+  "description": "hook-xray live view: the /hook-xray command",
+  "modules": ["./register.js"]
+}

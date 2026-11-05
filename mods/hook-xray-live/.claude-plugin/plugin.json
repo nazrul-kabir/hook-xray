@@ -1,0 +1,8 @@
+{
+  "name": "hook-xray-live",
+  "version": "0.1.0",
+  "description": "Live view for hook-xray: /hook-xray lists the hooks this session gets from --settings / SDK inline settings and from managed policy (MDM, registry, server-managed), and lints them. Read-only.",
+  "author": { "name": "hook-xray contributors" },
+  "license": "MIT",
+  "keywords": ["hooks", "lint", "security"]
+}

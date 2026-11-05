@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "Setup": [
+      {
+        "matcher": "maintenance",
+        "hooks": [{ "type": "command", "command": "echo hook-xray positive control" }]
+      }
+    ]
+  }
+}
