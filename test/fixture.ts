@@ -80,7 +80,7 @@ hooks:
       hooks:
         - type: command
           command: python3
-          args: ["${home}/.claude/skills/doc-sync/hook.py"]
+          args: [${JSON.stringify(join(home, ".claude", "skills", "doc-sync", "hook.py"))}]
           timeout: 5
 ---
 # Doc sync
