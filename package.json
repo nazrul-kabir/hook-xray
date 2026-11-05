@@ -1,0 +1,45 @@
+{
+  "name": "hook-xray",
+  "version": "0.1.0-alpha.0",
+  "description": "X-ray every Claude Code hook and mod: source, owner, trigger, config mistakes. Read-only.",
+  "scripts": {
+    "build": "tsc -p .",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p . --noEmit",
+    "test:mod": "claude plugin test mods/hook-xray-live && claude plugin validate mods/hook-xray-live"
+  },
+  "keywords": [
+    "claude-code",
+    "hooks",
+    "lint",
+    "mods",
+    "security"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.9.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "type": "module",
+  "bin": {
+    "hook-xray": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}
