@@ -93,7 +93,7 @@ To check it works, start a session with a harmless test hook: `claude --plugin-d
 
 "Likely" findings come from reading the hook's command and the script files it references. hook-xray never guesses at mod code: when `claude` isn't on PATH it reports the mod as present but unvalidated.
 
-`disableAllHooks` and `allowManagedHooksOnly` are read first; when they're on, only managed hooks are linted. (Known gap: `disableAllHooks` set in *managed* settings turns off managed hooks too; hook-xray still lints them. Fixed before 0.1.0.)
+`disableAllHooks` and `allowManagedHooksOnly` are read first; when they're on, only managed hooks are linted. `disableAllHooks` set in *managed* settings turns off every hook, managed ones included, so no hooks are linted then.
 
 ## What it can't see
 

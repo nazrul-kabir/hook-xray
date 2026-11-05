@@ -155,6 +155,26 @@ describe("lint rules", () => {
   });
 });
 
+describe("source status", () => {
+  it("tells missing, unreadable, invalid and found apart", () => {
+    const { fx, inv } = scan();
+    const status = (p: string) => inv.sources.find((s) => s.path === p)?.status;
+    const allInv = discover({
+      home: fx.home, cwd: fx.project, managedDir: fx.managedDir, allProjects: true,
+      extraSettings: [fx.flagFile], validator: fakeValidator,
+    });
+    const st = (p: string) => allInv.sources.find((s) => s.path === p)?.status;
+    expect(status(join(fx.home, ".claude", "settings.json"))).toBe("found");
+    expect(status(join(fx.project, ".claude", "settings.local.json"))).toBe("missing");
+    expect(st(join(fx.broken, ".claude", "settings.json"))).toBe("invalid");
+    expect(st(join(fx.odd, ".claude", "settings.json"))).toBe("unreadable");
+    const kinds = Object.fromEntries(allInv.parseErrors.map((e) => [e.file, e.kind]));
+    expect(kinds[join(fx.broken, ".claude", "settings.json")]).toBe("invalid");
+    expect(kinds[join(fx.odd, ".claude", "settings.json")]).toBe("unreadable");
+    expect(allInv.sources.every((s) => s.found === (s.status === "found"))).toBe(true);
+  });
+});
+
 describe("mods report parsing", () => {
   it("parses validate notes and gating hooks", () => {
     const v = parseValidateReport((fakeValidator("/x") as { report: unknown }).report);
@@ -234,5 +254,13 @@ describe("findings baseline (presentation changes must not change analysis)", ()
       const { inv, findings } = baselineScan(all);
       expect(normalized(inv, findings)).toEqual(expected[key]);
     }
+  });
+
+  it("disableAllHooks in managed settings: no hook is linted, managed ones included", () => {
+    const expected = JSON.parse(readFileSync(new URL("./findings.baseline.json", import.meta.url), "utf8"));
+    const { inv, findings } = baselineScan(true, { managedDisableAllHooks: true });
+    expect(inv.global.disableAllHooks).toEqual({ value: true, from: "managed" });
+    expect(findings.some((f) => f.hookId)).toBe(false);
+    expect(normalized(inv, findings)).toEqual(expected.managedDisableAllHooks);
   });
 });

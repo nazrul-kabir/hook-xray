@@ -2,14 +2,25 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
-export type JsonResult = { ok: true; value: unknown } | { ok: false; missing: boolean; error?: string };
+export type ReadStatus = "missing" | "unreadable" | "invalid";
+export type JsonResult =
+  | { ok: true; value: unknown }
+  | { ok: false; missing: true; status: "missing"; error?: undefined }
+  | { ok: false; missing: false; status: "unreadable" | "invalid"; error: string };
 
 export function readJson(path: string): JsonResult {
-  if (!existsSync(path)) return { ok: false, missing: true };
+  if (!existsSync(path)) return { ok: false, missing: true, status: "missing" };
+  let text: string;
   try {
-    return { ok: true, value: JSON.parse(readFileSync(path, "utf8")) };
+    text = readFileSync(path, "utf8");
   } catch (e) {
-    return { ok: false, missing: false, error: (e as Error).message };
+    // EISDIR, EACCES, EPERM: the path exists but can't be read as a file
+    return { ok: false, missing: false, status: "unreadable", error: (e as NodeJS.ErrnoException).code ?? (e as Error).message };
+  }
+  try {
+    return { ok: true, value: JSON.parse(text) };
+  } catch (e) {
+    return { ok: false, missing: false, status: "invalid", error: (e as Error).message };
   }
 }
 

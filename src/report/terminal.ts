@@ -50,7 +50,14 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
   out.push(pc.bold(`${n(summary.hooks, "hook")} and ${n(summary.mods, "mod")} found across ${pj}`));
 
   const g = inv.global;
-  if (g.disableAllHooks?.value) out.push(pc.yellow(`disableAllHooks is on (from ${g.disableAllHooks.from}): only managed hooks run`));
+  if (g.disableAllHooks?.value)
+    out.push(
+      pc.yellow(
+        g.disableAllHooks.from === "managed"
+          ? "disableAllHooks is on (from managed settings): no hooks run, managed ones included"
+          : `disableAllHooks is on (from ${g.disableAllHooks.from}): only managed hooks run`,
+      ),
+    );
   if (g.allowManagedHooksOnly) out.push(pc.yellow("allowManagedHooksOnly is on: user, project, local and plugin hooks don't run"));
   if (g.allowedHttpHookUrls) out.push(pc.dim(`allowedHttpHookUrls is set (${n(g.allowedHttpHookUrls.length, "pattern")})`));
   out.push("");

@@ -341,10 +341,13 @@ function modFindings(inv: Inventory): Finding[] {
 }
 
 export function lint(inv: Inventory): Finding[] {
-  // disableAllHooks can't disable managed hooks, so those are still linted.
-  const off = inv.global.disableAllHooks?.value === true;
+  // disableAllHooks from user/project/local/flag settings can't disable managed hooks, so those are still
+  // linted. Set in managed settings it turns off every hook, managed ones included (docs/context.md).
+  const dis = inv.global.disableAllHooks;
+  const off = dis?.value === true;
+  const offAll = off && dis?.from === "managed";
   const managedOnly = inv.global.allowManagedHooksOnly;
-  const live = inv.hooks.filter((h) => (!off && !managedOnly) || h.owner.kind === "managed");
+  const live = offAll ? [] : inv.hooks.filter((h) => (!off && !managedOnly) || h.owner.kind === "managed");
   const findings = live.flatMap((h) => RULES.flatMap((r) => r(h, inv)));
   if (!off && !managedOnly) findings.push(...doubleRun(inv));
   findings.push(...modFindings(inv));
