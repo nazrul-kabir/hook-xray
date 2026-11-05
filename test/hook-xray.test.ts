@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { baselineScan, normalized } from "./baseline.js";
 import { join } from "node:path";
 import { addLiveSnapshot } from "../src/discover/live.js";
-import { discover, type Env } from "../src/discover/index.js";
+import { discover, isScratch, type Env } from "../src/discover/index.js";
 import { parseValidateReport } from "../src/discover/mods.js";
 import { lint, _test } from "../src/lint/rules.js";
 import { renderJson } from "../src/report/json.js";
@@ -172,6 +172,30 @@ describe("source status", () => {
     expect(kinds[join(fx.broken, ".claude", "settings.json")]).toBe("invalid");
     expect(kinds[join(fx.odd, ".claude", "settings.json")]).toBe("unreadable");
     expect(allInv.sources.every((s) => s.found === (s.status === "found"))).toBe(true);
+  });
+});
+
+describe("project labels", () => {
+  const all = (fx: ReturnType<typeof buildFixture>) =>
+    discover({ home: fx.home, cwd: fx.project, managedDir: fx.managedDir, allProjects: true, extraSettings: [fx.flagFile], validator: fakeValidator });
+
+  it("keeps scratch workspaces, labelled, and doesn't change the project count", () => {
+    const fx = buildFixture();
+    const inv = all(fx);
+    const scratchPath = inv.projects.find((p) => p.includes("scratch-workspaces"))!;
+    expect(scratchPath).toBeDefined();
+    expect(inv.projectDetails.map((d) => d.path)).toEqual(inv.projects);
+    expect(inv.projectDetails.filter((d) => d.scratch).map((d) => d.path)).toEqual([scratchPath]);
+  });
+
+  it("skips .claude/worktrees with either path separator", () => {
+    const fx = buildFixture();
+    const inv = all(fx);
+    expect(inv.projects.some((p) => /worktrees/.test(p))).toBe(false);
+    expect(inv.hooks.some((h) => h.file.includes("worktrees"))).toBe(false);
+    expect(isScratch("C:\\Users\\a\\Claude-Data\\x\\scratch-workspaces\\y")).toBe(true);
+    expect(isScratch("/home/a/scratch-workspaces/y")).toBe(true);
+    expect(isScratch("/home/a/work/app")).toBe(false);
   });
 });
 

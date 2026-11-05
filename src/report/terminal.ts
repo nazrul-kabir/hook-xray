@@ -45,7 +45,10 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
 
   out.push(pc.bold(`hook-xray ${o.version}`) + pc.dim("  · read-only, nothing was executed"));
   out.push("");
-  const pj = summary.projects === 1 ? "1 project" : `${summary.projects} projects`;
+  const nScratch = inv.projectDetails.filter((d) => d.scratch).length;
+  const pj = (summary.projects === 1 ? "1 project" : `${summary.projects} projects`) + (nScratch ? ` (${nScratch} scratch)` : "");
+  const scratchSet = new Set(inv.projectDetails.filter((d) => d.scratch).map((d) => d.path));
+  const scratch = (h: { owner: { project?: string } }) => !!h.owner.project && scratchSet.has(h.owner.project);
   const n = (c: number, w: string) => `${c} ${w}${c === 1 ? "" : "s"}`;
   out.push(pc.bold(`${n(summary.hooks, "hook")} and ${n(summary.mods, "mod")} found across ${pj}`));
 
@@ -76,7 +79,7 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
       const matcher = h.matcher ? pc.magenta(`[${h.matcher}]`) + " " : "";
       const timeout = h.handler.timeout ?? defaultTimeout(h);
       const tlabel = h.handler.timeout === undefined ? pc.dim(`${timeout}s default`) : `${timeout}s`;
-      const head = `  ${pc.dim(h.id.padEnd(4))} ${matcher}${pc.cyan(h.handler.type)} ${pc.dim("·")} ${o.redact ? where(h, true) : tilde(where(h))} ${pc.dim("·")} ${tlabel}`;
+      const head = `  ${pc.dim(h.id.padEnd(4))} ${matcher}${pc.cyan(h.handler.type)} ${pc.dim("·")} ${o.redact ? where(h, true, scratch(h)) : tilde(where(h, false, scratch(h)))} ${pc.dim("·")} ${tlabel}`;
       out.push(head);
       out.push(`       ${clip(whatRuns(h, o.redact), width - 8)}`);
       const sorted = (byHook.get(h.id) ?? []).sort((a, b) => rank(b) - rank(a));

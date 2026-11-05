@@ -28,7 +28,7 @@
 |---|---|
 | 0. Findings baseline | ✅ done |
 | 1. Source status | ✅ done (incl. managed `disableAllHooks` fix) |
-| 2. Scratch-workspace labels | todo |
+| 2. Scratch-workspace labels | ✅ done (incl. Windows worktree skip) |
 | 3. Finding groups | todo |
 | 4. Terminal layout + `--expand` | todo |
 | 5. Short `--sources` | todo |
