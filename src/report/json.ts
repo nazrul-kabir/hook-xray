@@ -1,14 +1,13 @@
 import type { Finding, Inventory } from "../types.js";
 import { groupFindings } from "./group.js";
-import { mapStrings, pathRedactor, redactValue } from "./redact.js";
+import { makeRedactor } from "./redact.js";
 import type { Summary } from "./summary.js";
 
 export function renderJson(inv: Inventory, findings: Finding[], summary: Summary, version: string, redact: boolean): string {
-  const home = inv.home;
   // Redaction runs on raw strings before JSON.stringify: afterwards every backslash is escaped to \\
   // and Windows project paths no longer match. Every string field goes through `r`.
-  const redactAll = pathRedactor(inv.projects, home);
-  const r = <T>(v: T): T => (redact ? (mapStrings(v, redactAll) as T) : v);
+  const rd = makeRedactor(inv, { on: redact });
+  const r = rd.value;
   const proj = (s?: string) => (s === undefined ? s : r(s));
   const groups = groupFindings(inv, findings).notes;
   const report = {
@@ -29,7 +28,7 @@ export function renderJson(inv: Inventory, findings: Finding[], summary: Summary
       type: h.handler.type,
       owner: { ...h.owner, project: proj(h.owner.project) },
       file: r(h.file),
-      handler: redact ? redactValue(mapStrings(h.raw, redactAll), "", home) : h.raw,
+      handler: rd.handler.value(h),
     })),
     mods: r(inv.mods),
     findings: r(findings),

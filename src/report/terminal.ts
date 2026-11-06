@@ -3,7 +3,7 @@ import pc from "picocolors";
 import type { Finding, HookRecord, Inventory, ModRecord } from "../types.js";
 import { defaultTimeout, where } from "../lint/rules.js";
 import { groupFindings } from "./group.js";
-import { pathRedactor, redactUrl } from "./redact.js";
+import { makeRedactor } from "./redact.js";
 import type { Summary } from "./summary.js";
 
 const ICON = { attention: pc.red("✖"), warning: pc.yellow("⚠"), info: pc.cyan("ℹ") } as const;
@@ -32,25 +32,12 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
   // One helper for every message, fix, command and path: with --redact, project paths shrink to …/<folder>
   // and secrets, hosts and the home folder are masked; otherwise the home folder becomes ~.
   const projects = [...inv.projects].sort((a, b) => b.length - a.length);
-  const redactAll = pathRedactor(inv.projects, inv.home);
-  const r = (s: string) => (o.redact ? redactAll(s) : inv.home && inv.home !== "/" ? s.split(inv.home).join("~") : s);
+  const rd = makeRedactor(inv, { on: o.redact });
+  const r = rd.text;
   const owner = (h: HookRecord) => r(where(h, o.redact, scratch(h)));
   const isPlugin = (h?: HookRecord) => h?.owner.kind === "plugin";
 
-  const whatRuns = (h: HookRecord): string => {
-    const x = h.handler;
-    switch (x.type) {
-      case "command":
-        return r([x.command, ...(x.args ?? [])].join(" "));
-      case "http":
-        return o.redact ? redactUrl(x.url) : x.url;
-      case "mcp_tool":
-        return `${x.server} → ${x.tool}`;
-      case "prompt":
-      case "agent":
-        return o.redact ? `<prompt, ${x.prompt.length} chars>` : JSON.stringify(x.prompt.slice(0, 60) + (x.prompt.length > 60 ? "…" : ""));
-    }
-  };
+  const whatRuns = rd.handler.line;
 
   const hookLine = (h: HookRecord) => {
     const matcher = h.matcher ? pc.magenta(`[${h.matcher}]`) + " " : "";
