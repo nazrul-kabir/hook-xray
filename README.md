@@ -47,7 +47,8 @@ npx hook-xray --all-projects         # every project in ~/.claude.json
 npx hook-xray --event PreToolUse     # one event
 npx hook-xray --json --redact        # for sharing; see the redaction note below
 npx hook-xray --settings ./launcher-settings.json   # files passed to claude --settings
-npx hook-xray --sources              # list every path checked
+npx hook-xray --sources              # sources found or broken, plus a short summary
+npx hook-xray --sources --expand     # also every path that was checked and missing
 npx hook-xray --expand               # list every hook behind each collapsed note
 npx hook-xray --live live.json       # add hooks saved by the live-view mod
 ```

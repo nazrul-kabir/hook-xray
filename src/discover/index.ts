@@ -42,6 +42,7 @@ export function discover(env: Env): Inventory {
     global: { disableAllHooks: null, allowManagedHooksOnly: false, allowedHttpHookUrls: null },
     sources: [],
     projects: [],
+    pluginNames: [],
     projectDetails: [],
     parseErrors: [],
   };
@@ -171,6 +172,7 @@ export function discover(env: Env): Inventory {
       if (usable[0]) pluginDirs.push({ key, root: usable[0].installPath as string, enabled: enabled.has(key) });
     }
   }
+  inv.pluginNames = pluginDirs.map((p) => p.key.split("@")[0]!);
   for (const p of pluginDirs) scanPlugin(p.root, p.key, p.enabled, addHooks, note, inv);
 
   // --- mods ---

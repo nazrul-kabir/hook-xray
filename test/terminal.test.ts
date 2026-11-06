@@ -65,3 +65,30 @@ describe("terminal --redact", () => {
     }
   });
 });
+
+describe("terminal --sources", () => {
+  const sources = (o: { expand?: boolean } = {}) => render(true, { showSources: true, ...o });
+
+  it("lists found, unreadable and invalid only; --expand adds missing", () => {
+    const { inv, text } = sources();
+    const listed = text.slice(text.indexOf("Sources"), text.indexOf("projects checked"));
+    const rows = listed.split("\n").filter((l) => /^ {2}[✓✖–] /.test(l)).length;
+    expect(rows).toBe(inv.sources.filter((x) => x.status !== "missing").length);
+    expect(listed).toContain("[unreadable]");
+    expect(listed).toContain("[invalid]");
+    expect(listed).not.toContain("[missing]");
+    expect(sources({ expand: true }).text).toContain("[missing]");
+  });
+
+  it("prints project, plugin and managed summary lines", () => {
+    const { inv, text } = sources();
+    expect(text).toContain(`${inv.projects.length} projects checked:`);
+    expect(text).toMatch(/[1-9]\d* with \.claude config, \d+ without, 1 scratch workspace \(temporary\)/);
+    expect(text).toMatch(/\d+ plugins?: \d+ with hooks, \d+ without \(normal\)/);
+    expect(text).toMatch(/managed settings: (found|none found)/);
+  });
+
+  it("default footer points at --sources and --json", () => {
+    expect(render(false).text).toMatch(/\d+ of \d+ sources present · --sources for details · --json for everything/);
+  });
+});
