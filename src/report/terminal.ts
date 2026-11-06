@@ -1,6 +1,7 @@
 import pc from "picocolors";
 import type { Finding, HookRecord, Inventory, ModRecord } from "../types.js";
 import { defaultTimeout, where } from "../lint/rules.js";
+import { groupFindings } from "./group.js";
 import { redactText, redactUrl } from "./redact.js";
 import type { Summary } from "./summary.js";
 
@@ -9,49 +10,76 @@ const ICON = { attention: pc.red("✖"), warning: pc.yellow("⚠"), info: pc.cya
 export interface TerminalOptions {
   redact: boolean;
   showSources: boolean;
+  /** list every hook behind each collapsed note */
+  expand?: boolean;
+  /** set when --event filtered the hooks; mods are not scanned then, so the Mods section is skipped */
+  event?: string;
   version: string;
 }
 
-let HOME = "";
-function tilde(s: string) {
-  const h = HOME;
-  return h && h !== "/" ? s.split(h).join("~") : s;
-}
-
-function whatRuns(h: HookRecord, redact: boolean): string {
-  const x = h.handler;
-  const r = (s: string) => (redact ? redactText(s, HOME) : tilde(s));
-  switch (x.type) {
-    case "command":
-      return r([x.command, ...(x.args ?? [])].join(" "));
-    case "http":
-      return redact ? redactUrl(x.url) : x.url;
-    case "mcp_tool":
-      return `${x.server} → ${x.tool}`;
-    case "prompt":
-    case "agent":
-      return redact ? `<prompt, ${x.prompt.length} chars>` : JSON.stringify(x.prompt.slice(0, 60) + (x.prompt.length > 60 ? "…" : ""));
-  }
-}
-
-function clip(s: string, n: number) {
-  return s.length > n ? s.slice(0, n - 1) + "…" : s;
-}
+const n = (c: number, w: string) => `${c} ${w}${c === 1 ? "" : "s"}`;
+const clip = (s: string, len: number) => (s.length > len ? s.slice(0, len - 1) + "…" : s);
+const head = (s: string) => pc.bold(pc.underline(s));
 
 export function renderTerminal(inv: Inventory, findings: Finding[], summary: Summary, o: TerminalOptions): string {
-  HOME = inv.home;
   const out: string[] = [];
   const width = Math.max(80, Math.min(process.stdout.columns ?? 100, 140));
-
-  out.push(pc.bold(`hook-xray ${o.version}`) + pc.dim("  · read-only, nothing was executed"));
-  out.push("");
-  const nScratch = inv.projectDetails.filter((d) => d.scratch).length;
-  const pj = (summary.projects === 1 ? "1 project" : `${summary.projects} projects`) + (nScratch ? ` (${nScratch} scratch)` : "");
+  const hooks = new Map(inv.hooks.map((h) => [h.id, h] as const));
   const scratchSet = new Set(inv.projectDetails.filter((d) => d.scratch).map((d) => d.path));
-  const scratch = (h: { owner: { project?: string } }) => !!h.owner.project && scratchSet.has(h.owner.project);
-  const n = (c: number, w: string) => `${c} ${w}${c === 1 ? "" : "s"}`;
-  out.push(pc.bold(`${n(summary.hooks, "hook")} and ${n(summary.mods, "mod")} found across ${pj}`));
+  const scratch = (h: HookRecord) => !!h.owner.project && scratchSet.has(h.owner.project);
 
+  // One helper for every message, fix, command and path: with --redact, project paths shrink to …/<folder>
+  // and secrets, hosts and the home folder are masked; otherwise the home folder becomes ~.
+  const projects = [...inv.projects].sort((a, b) => b.length - a.length);
+  const r = (s: string) => {
+    if (!o.redact) return inv.home && inv.home !== "/" ? s.split(inv.home).join("~") : s;
+    for (const p of projects) s = s.split(p).join(`…/${p.split(/[\\/]/).filter(Boolean).pop()}`);
+    return redactText(s, inv.home);
+  };
+  const owner = (h: HookRecord) => r(where(h, o.redact, scratch(h)));
+  const isPlugin = (h?: HookRecord) => h?.owner.kind === "plugin";
+
+  const whatRuns = (h: HookRecord): string => {
+    const x = h.handler;
+    switch (x.type) {
+      case "command":
+        return r([x.command, ...(x.args ?? [])].join(" "));
+      case "http":
+        return o.redact ? redactUrl(x.url) : x.url;
+      case "mcp_tool":
+        return `${x.server} → ${x.tool}`;
+      case "prompt":
+      case "agent":
+        return o.redact ? `<prompt, ${x.prompt.length} chars>` : JSON.stringify(x.prompt.slice(0, 60) + (x.prompt.length > 60 ? "…" : ""));
+    }
+  };
+
+  const hookLine = (h: HookRecord) => {
+    const matcher = h.matcher ? pc.magenta(`[${h.matcher}]`) + " " : "";
+    const timeout = h.handler.timeout === undefined ? pc.dim(`${defaultTimeout(h)}s default`) : `${h.handler.timeout}s`;
+    return `${pc.dim(h.id.padEnd(4))} ${h.event} ${matcher}${pc.cyan(h.handler.type)} ${pc.dim("·")} ${owner(h)} ${pc.dim("·")} ${timeout}`;
+  };
+
+  /** One block per finding: hook line, what it runs, message, fix, ownership line. */
+  const block = (f: Finding) => {
+    const h = hooks.get(f.hookId ?? "");
+    if (!h) return;
+    const tag = f.confidence === "likely" ? pc.dim(" (likely)") : "";
+    out.push(`  ${ICON[f.severity]} ${hookLine(h)}`);
+    out.push(`       ${clip(whatRuns(h), width - 8)}`);
+    out.push(`       ${r(f.message)}${tag}`);
+    if (f.fix) out.push(pc.dim(`       fix: ${r(f.fix)}`));
+    if (isPlugin(h)) out.push(pc.dim("       Plugin-owned: report it to the author; disable the plugin if the behavior is unwanted."));
+    out.push("");
+  };
+
+  // Header
+  const nScratch = scratchSet.size;
+  const plugins = new Set([...inv.hooks.filter(isPlugin).map((h) => h.owner.name), ...inv.mods.map((m) => m.plugin)]).size;
+  out.push(pc.bold(`hook-xray ${o.version}`) + pc.dim("  · read-only, nothing was executed"));
+  out.push(
+    [n(summary.hooks, "hook"), n(plugins, "plugin"), n(summary.mods, "mod"), n(summary.projects, "project") + (nScratch ? ` (${nScratch} scratch)` : "")].join(" · "),
+  );
   const g = inv.global;
   if (g.disableAllHooks?.value)
     out.push(
@@ -64,51 +92,78 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
   if (g.allowManagedHooksOnly) out.push(pc.yellow("allowManagedHooksOnly is on: user, project, local and plugin hooks don't run"));
   if (g.allowedHttpHookUrls) out.push(pc.dim(`allowedHttpHookUrls is set (${n(g.allowedHttpHookUrls.length, "pattern")})`));
   out.push("");
-  if (summary.lines.length) {
-    for (const l of summary.lines) out.push(l.startsWith("  ") ? pc.dim(l) : l);
-  } else out.push(pc.green("No findings."));
-  out.push("");
+  const top = summary.lines.filter((l) => !l.startsWith("  "));
+  out.push(...(top.length ? top : [pc.green("No findings.")]), "");
 
-  // Hooks grouped by event, findings under each hook.
-  const byHook = new Map<string, Finding[]>();
-  for (const f of findings) if (f.hookId) byHook.set(f.hookId, [...(byHook.get(f.hookId) ?? []), f]);
-  const events = [...new Set(inv.hooks.map((h) => h.event))].sort();
-  for (const ev of events) {
-    out.push(pc.bold(pc.underline(ev)));
-    for (const h of inv.hooks.filter((x) => x.event === ev)) {
-      const matcher = h.matcher ? pc.magenta(`[${h.matcher}]`) + " " : "";
-      const timeout = h.handler.timeout ?? defaultTimeout(h);
-      const tlabel = h.handler.timeout === undefined ? pc.dim(`${timeout}s default`) : `${timeout}s`;
-      const head = `  ${pc.dim(h.id.padEnd(4))} ${matcher}${pc.cyan(h.handler.type)} ${pc.dim("·")} ${o.redact ? where(h, true, scratch(h)) : tilde(where(h, false, scratch(h)))} ${pc.dim("·")} ${tlabel}`;
-      out.push(head);
-      out.push(`       ${clip(whatRuns(h, o.redact), width - 8)}`);
-      const sorted = (byHook.get(h.id) ?? []).sort((a, b) => rank(b) - rank(a));
-      for (const f of sorted) {
-        const tag = f.confidence === "likely" ? pc.dim(" (likely)") : "";
-        out.push(`       ${ICON[f.severity]} ${f.message}${tag}`);
-        if (f.fix) out.push(pc.dim(`         fix: ${f.fix}`));
+  const grouped = groupFindings(inv, findings);
+
+  if (grouped.blocking.length) {
+    out.push(head("Never runs or runs twice"));
+    grouped.blocking.forEach(block);
+  }
+  if (grouped.warnings.length) {
+    out.push(head("Warnings"));
+    grouped.warnings.forEach(block);
+  }
+
+  if (!o.event) {
+    out.push(head("Mods"));
+    if (inv.mods.length) for (const m of inv.mods) out.push(...renderMod(m, findings, r));
+    else out.push("  No mods found.");
+    out.push("");
+  }
+
+  if (grouped.notes.length) {
+    out.push(head("Notes"));
+    for (const note of grouped.notes) {
+      const tag = note.confidence === "likely" ? pc.dim(" (likely)") : "";
+      out.push(`  ${ICON.info} ${r(note.message)}${tag}`);
+      out.push(pc.dim(`       ${n(note.hookIds.length, "hook")}: ${note.owners.map((x) => `${r(x.label)} ×${x.count}`).join(", ")}`));
+      if (note.fix) out.push(pc.dim(`       fix: ${r(note.fix)}`));
+      const plugged = note.owners.filter((x) => x.plugin).length;
+      if (plugged === note.owners.length) out.push(pc.dim("       Plugin-owned: report it to the author."));
+      else if (plugged) out.push(pc.dim("       Plugin-owned ones: report them to the author."));
+      if (o.expand)
+        for (const id of note.hookIds) {
+          const h = hooks.get(id);
+          if (h) out.push(`         ${pc.dim(h.id.padEnd(4))} ${h.event} ${pc.dim("·")} ${owner(h)}`);
+        }
+    }
+    out.push("");
+  }
+
+  // Hooks by owner: your own config first, then each plugin.
+  if (inv.hooks.length) {
+    out.push(head("Hooks by owner"));
+    const byOwner = new Map<string, HookRecord[]>();
+    for (const h of [...inv.hooks].sort((a, b) => Number(isPlugin(a)) - Number(isPlugin(b)))) {
+      const k = owner(h);
+      byOwner.set(k, [...(byOwner.get(k) ?? []), h]);
+    }
+    for (const [label, hs] of byOwner) {
+      out.push(`  ${pc.bold(label)}`);
+      for (const h of hs) {
+        const matcher = h.matcher ? pc.magenta(`[${h.matcher}]`) + " " : "";
+        out.push(`    ${pc.dim(h.id.padEnd(4))} ${h.event} ${matcher}${pc.cyan(h.handler.type)} ${pc.dim("·")} ${clip(whatRuns(h), width - 40)}`);
       }
     }
     out.push("");
   }
 
-  if (inv.mods.length) {
-    out.push(pc.bold(pc.underline("Mods")));
-    for (const m of inv.mods) out.push(...renderMod(m, findings, o.redact));
-    out.push("");
-  }
-
   if (inv.parseErrors.length) {
-    out.push(pc.bold(pc.underline("Could not read")));
-    for (const e of inv.parseErrors) out.push(`  ${pc.red("✖")} ${tilde(e.file)}: ${e.error}`);
+    out.push(head("Could not read"));
+    const label = { unreadable: "unreadable", invalid: "invalid JSON", schema: "schema error" } as const;
+    for (const kind of ["unreadable", "invalid", "schema"] as const)
+      for (const e of inv.parseErrors.filter((x) => (x.kind ?? "invalid") === kind))
+        out.push(`  ${pc.red("✖")} ${pc.dim(label[kind].padEnd(13))} ${r(e.file)}: ${r(e.error)}`);
     out.push("");
   }
 
   if (o.showSources) {
-    out.push(pc.bold(pc.underline("Sources scanned")));
+    out.push(head("Sources scanned"));
     for (const s of inv.sources) {
       const mark = s.found ? pc.green("✓") : pc.dim("–");
-      out.push(`  ${mark} ${pc.dim(s.kind.padEnd(13))} ${tilde(s.path)}${s.note ? pc.dim(`  (${s.note})`) : ""}`);
+      out.push(`  ${mark} ${pc.dim(s.kind.padEnd(13))} ${r(s.path)}${s.note ? pc.dim(`  (${r(s.note)})`) : ""}`);
     }
   } else {
     const found = inv.sources.filter((s) => s.found).length;
@@ -117,11 +172,11 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
   return out.join("\n");
 }
 
-function renderMod(m: ModRecord, findings: Finding[], redact: boolean): string[] {
-  const lines = [`  ${pc.dim(m.id.padEnd(4))} ${pc.bold(m.plugin)} ${pc.dim(`(${m.origin}) · ${redact ? redactText(m.dir, HOME) : tilde(m.dir)}`)}`];
+function renderMod(m: ModRecord, findings: Finding[], r: (s: string) => string): string[] {
+  const lines = [`  ${pc.dim(m.id.padEnd(4))} ${pc.bold(m.plugin)} ${pc.dim(`(${m.origin}) · ${r(m.dir)}`)}`];
   const v = m.validation;
   if (!v.ok) {
-    lines.push(`       ${ICON.info} validation unavailable: ${v.reason}`);
+    lines.push(`       ${ICON.info} validation unavailable: ${r(v.reason)}`);
     return lines;
   }
   const row = (label: string, xs: string[]) => xs.length && lines.push(`       ${pc.dim(label.padEnd(12))} ${xs.join(", ")}`);
@@ -131,10 +186,6 @@ function renderMod(m: ModRecord, findings: Finding[], redact: boolean): string[]
   row("env writes", v.envWrites);
   row("state reads", v.stateReads);
   row("state writes", v.stateWrites);
-  for (const f of findings.filter((f) => f.modId === m.id && f.rule !== "mod-unvalidated")) {
-    lines.push(`       ${ICON[f.severity]} ${f.message}`);
-  }
+  for (const f of findings.filter((f) => f.modId === m.id && f.rule !== "mod-unvalidated")) lines.push(`       ${ICON[f.severity]} ${r(f.message)}`);
   return lines;
 }
-
-const rank = (f: Finding) => ({ attention: 2, warning: 1, info: 0 })[f.severity];

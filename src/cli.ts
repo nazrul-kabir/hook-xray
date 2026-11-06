@@ -31,6 +31,7 @@ const program = new Command()
   .option("--no-validate", "don't run `claude plugin validate` on mods")
   .option("--claude-bin <path>", "claude CLI used to validate mods", "claude")
   .option("--sources", "list every source path checked")
+  .option("--expand", "list every hook behind each collapsed note, and every missing source with --sources")
   .option("--cwd <dir>", "project directory to scan", process.cwd())
   .option("--home <dir>", "home directory to scan (for testing)", homedir())
   .option("--managed-dir <dir>", "managed settings directory", defaultManagedDir());
@@ -46,6 +47,7 @@ const o = program.opts<{
   validate: boolean;
   claudeBin: string;
   sources?: boolean;
+  expand?: boolean;
   cwd: string;
   home: string;
   managedDir: string;
@@ -74,5 +76,5 @@ const summary = summarize(inv, findings);
 process.stdout.write(
   (o.json
     ? renderJson(inv, findings, summary, version, !!o.redact)
-    : renderTerminal(inv, findings, summary, { redact: !!o.redact, showSources: !!o.sources, version })) + "\n",
+    : renderTerminal(inv, findings, summary, { redact: !!o.redact, showSources: !!o.sources, expand: !!o.expand, event: o.event, version })) + "\n",
 );

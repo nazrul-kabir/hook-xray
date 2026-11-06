@@ -30,7 +30,7 @@
 | 1. Source status | ✅ done (incl. managed `disableAllHooks` fix) |
 | 2. Scratch-workspace labels | ✅ done (incl. Windows worktree skip) |
 | 3. Finding groups | ✅ done |
-| 4. Terminal layout + `--expand` | todo |
+| 4. Terminal layout + `--expand` | ✅ done (incl. terminal path redaction) |
 | 5. Short `--sources` | todo |
 | 6. Additive JSON | todo |
 | 7. Ship-gate tests | todo |
