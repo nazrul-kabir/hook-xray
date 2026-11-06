@@ -16,7 +16,15 @@
     "mods",
     "security"
   ],
-  "author": "",
+  "author": "Nazrul Kabir",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nazrul-kabir/hook-xray.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nazrul-kabir/hook-xray/issues"
+  },
+  "homepage": "https://github.com/nazrul-kabir/hook-xray#readme",
   "license": "MIT",
   "dependencies": {
     "commander": "^15.0.0",
