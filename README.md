@@ -48,6 +48,7 @@ npx hook-xray --event PreToolUse     # one event
 npx hook-xray --json --redact        # for sharing; see the redaction note below
 npx hook-xray --settings ./launcher-settings.json   # files passed to claude --settings
 npx hook-xray --sources              # list every path checked
+npx hook-xray --expand               # list every hook behind each collapsed note
 npx hook-xray --live live.json       # add hooks saved by the live-view mod
 ```
 
@@ -71,7 +72,7 @@ To check it works, start a session with a harmless test hook: `claude --plugin-d
 
 `--redact` hides header and env values, token-like strings, URL hosts and queries, prompts, MCP inputs and your home path, and shortens project paths in hooks and findings.
 
-**Known gaps, fixed before 0.1.0:** project paths outside your home folder still appear in `--json --redact` source lists and read errors on Windows, and in the terminal's `--sources` and "Could not read" lists on every OS. Check the output before sharing it.
+**Known gaps, fixed before 0.1.0:** project paths outside your home folder still appear in `--json --redact` source lists and read errors on Windows. Check the output before sharing it.
 
 ## Rules (v0.1)
 
