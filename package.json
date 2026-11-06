@@ -1,6 +1,6 @@
 {
   "name": "hook-xray",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0",
   "description": "X-ray every Claude Code hook and mod: source, owner, trigger, config mistakes. Read-only.",
   "scripts": {
     "build": "tsc -p .",

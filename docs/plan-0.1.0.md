@@ -34,7 +34,7 @@
 | 5. Short `--sources` | ✅ done |
 | 6. Additive JSON | ✅ done (incl. Windows redaction fix) |
 | 7. Ship-gate tests | ✅ done (gates spread over `terminal.test.ts`, `json.test.ts`, `group.test.ts`, `hook-xray.test.ts`) |
-| 8. Replica check, docs, version | todo |
+| 8. Replica check, docs, version | ✅ done |
 
 ## 0. Findings baseline ✅
 
