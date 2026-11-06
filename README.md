@@ -73,7 +73,9 @@ To check it works, start a session with a harmless test hook: `claude --plugin-d
 
 `--redact` hides header and env values, token-like strings, URL hosts and queries, prompts, MCP inputs and your home path, and shortens project paths in hooks and findings.
 
-**Known gaps, fixed before 0.1.0:** project paths outside your home folder still appear in `--json --redact` source lists and read errors on Windows. Check the output before sharing it.
+Redaction applies to the terminal output and to every string in `--json`, on Windows paths too. Still skim the output before sharing it.
+
+`--json` always carries every hook and finding. It adds `projectDetails` (which projects are scratch workspaces), `sources[].status` (`found`, `missing`, `unreadable`, `invalid`), `parseErrors[].kind`, and `groups` (the collapsed notes, with the hook ids behind each).
 
 ## Rules (v0.1)
 

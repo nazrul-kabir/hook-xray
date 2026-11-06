@@ -3,7 +3,7 @@ import pc from "picocolors";
 import type { Finding, HookRecord, Inventory, ModRecord } from "../types.js";
 import { defaultTimeout, where } from "../lint/rules.js";
 import { groupFindings } from "./group.js";
-import { redactText, redactUrl } from "./redact.js";
+import { pathRedactor, redactUrl } from "./redact.js";
 import type { Summary } from "./summary.js";
 
 const ICON = { attention: pc.red("✖"), warning: pc.yellow("⚠"), info: pc.cyan("ℹ") } as const;
@@ -32,11 +32,8 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
   // One helper for every message, fix, command and path: with --redact, project paths shrink to …/<folder>
   // and secrets, hosts and the home folder are masked; otherwise the home folder becomes ~.
   const projects = [...inv.projects].sort((a, b) => b.length - a.length);
-  const r = (s: string) => {
-    if (!o.redact) return inv.home && inv.home !== "/" ? s.split(inv.home).join("~") : s;
-    for (const p of projects) s = s.split(p).join(`…/${p.split(/[\\/]/).filter(Boolean).pop()}`);
-    return redactText(s, inv.home);
-  };
+  const redactAll = pathRedactor(inv.projects, inv.home);
+  const r = (s: string) => (o.redact ? redactAll(s) : inv.home && inv.home !== "/" ? s.split(inv.home).join("~") : s);
   const owner = (h: HookRecord) => r(where(h, o.redact, scratch(h)));
   const isPlugin = (h?: HookRecord) => h?.owner.kind === "plugin";
 
