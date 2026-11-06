@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { baselineScan } from "./baseline.js";
+import { buildFixture } from "./fixture.js";
+import { discover } from "../src/discover/index.js";
 import { lint } from "../src/lint/rules.js";
 import { renderTerminal } from "../src/report/terminal.js";
 import { summarize } from "../src/report/summary.js";
@@ -59,7 +61,12 @@ describe("terminal --redact", () => {
     inv.projects.push(win);
     inv.parseErrors.push({ file: `${win}\\.claude\\settings.json`, error: "bad", kind: "invalid" });
     inv.sources.push({ path: `${win}\\.claude\\settings.json`, kind: "project", found: false, status: "missing" });
-    const text = strip(renderTerminal(inv, lint(inv), summarize(inv, findings), { redact: true, showSources: true, version: "test" }));
+    // a grouped note and a hook command that name the Windows project too
+    const all = lint(inv);
+    all.push({ rule: "x", severity: "info", confidence: "certain", hookId: inv.hooks[0]!.id, message: `see ${win}\\x.js`, fix: `edit ${win}` });
+    inv.hooks[0]!.handler = { type: "command", command: `${win}\\run.cmd` };
+    const text = strip(renderTerminal(inv, all, summarize(inv, findings), { redact: true, showSources: true, version: "test" }));
+    expect(text).toContain("…/app");
     for (const leak of [fx.home, fx.project, fx.scratch, fx.broken, fx.odd, win, "Acme Corp", "sk-live-abcdefghijklmnop", "hooks.internal.example.com", "Check the command is safe"]) {
       expect(text).not.toContain(leak);
     }
@@ -90,5 +97,34 @@ describe("terminal --sources", () => {
 
   it("default footer points at --sources and --json", () => {
     expect(render(false).text).toMatch(/\d+ of \d+ sources present · --sources for details · --json for everything/);
+  });
+});
+
+describe("mods are always visible", () => {
+  const clean = () => ({
+    ok: true as const,
+    report: { success: true, manifest: { notes: [], errors: [], gatingHooks: [] }, contents: [{ type: "hooks", errors: [], notes: ["./register.js hooks: tool.call", "./register.js calls: $.ui.invalidate"], gatingHooks: [] }] },
+  });
+  const run = (mutate?: (inv: ReturnType<typeof discover>) => void) => {
+    const fx = buildFixture();
+    const inv = discover({ home: fx.home, cwd: fx.project, managedDir: fx.managedDir, allProjects: false, extraSettings: [fx.flagFile], validator: clean });
+    mutate?.(inv);
+    const findings = lint(inv);
+    return { inv, findings, text: strip(renderTerminal(inv, findings, summarize(inv, findings), { redact: false, showSources: false, version: "test" })) };
+  };
+
+  it("lists a mod with no findings, with its hooks and calls", () => {
+    const { inv, findings, text } = run();
+    expect(inv.mods.length).toBeGreaterThan(0);
+    expect(findings.filter((f) => f.modId)).toEqual([]);
+    const mods = text.slice(text.indexOf("Mods"), text.indexOf("Notes"));
+    expect(mods).toContain(inv.mods[0]!.plugin);
+    expect(mods).toContain("tool.call");
+    expect(mods).toContain("$.ui.invalidate");
+    expect(mods).not.toContain("No mods found.");
+  });
+
+  it("says so when there are none", () => {
+    expect(run((inv) => (inv.mods = [])).text).toContain("No mods found.");
   });
 });

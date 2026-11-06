@@ -33,7 +33,7 @@
 | 4. Terminal layout + `--expand` | ✅ done (incl. terminal path redaction) |
 | 5. Short `--sources` | ✅ done |
 | 6. Additive JSON | ✅ done (incl. Windows redaction fix) |
-| 7. Ship-gate tests | todo |
+| 7. Ship-gate tests | ✅ done (gates spread over `terminal.test.ts`, `json.test.ts`, `group.test.ts`, `hook-xray.test.ts`) |
 | 8. Replica check, docs, version | todo |
 
 ## 0. Findings baseline ✅
