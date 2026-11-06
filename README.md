@@ -6,13 +6,11 @@ hook-xray is a free, open-source, local tool for reviewing Claude Code hooks and
 
 Find what is configured, see where it came from, and catch configuration mistakes. Scan supported sources across projects, or use the live companion mod to inspect session settings. Export a redacted JSON report for review.
 
-> **Status: pre-release.** Not on npm yet, so `npx hook-xray` won't work until 0.1.0 is published. Run it from source:
->
-> ```bash
-> git clone <repo-url> hook-xray && cd hook-xray
-> npm install
-> npx tsx src/cli.ts
-> ```
+```bash
+npx hook-xray
+```
+
+Needs Node 20 or newer. To run from source instead: `git clone https://github.com/nazrul-kabir/hook-xray && cd hook-xray && npm install && npx tsx src/cli.ts`.
 
 hook-xray does not run the hooks it inspects, start MCP servers, change your settings, or make network requests. Mods are analysed with `claude plugin validate`, which reads their code without running it. It does not certify that a plugin is safe.
 
@@ -39,7 +37,7 @@ Before deciding what to trust, it helps to know what is installed.
 
 ## Usage
 
-From source, replace `npx hook-xray` with `npx tsx src/cli.ts`.
+From a source checkout, replace `npx hook-xray` with `npx tsx src/cli.ts`.
 
 ```bash
 npx hook-xray                        # this project + user + managed + plugins
