@@ -46,3 +46,24 @@ export function redactValue(v: unknown, key = "", home = homedir()): unknown {
   }
   return v;
 }
+
+/**
+ * Redacts one string: project paths shrink to …/<last folder> (longest first, so a nested project isn't
+ * half-replaced by its parent), then secrets, hosts and the home folder are masked. Works on raw strings,
+ * so call it before JSON.stringify, where backslashes are already escaped.
+ */
+export function pathRedactor(projects: string[], home: string): (s: string) => string {
+  const sorted = [...projects].sort((a, b) => b.length - a.length);
+  return (s) => {
+    for (const p of sorted) s = s.split(p).join(`…/${p.split(/[\\/]/).filter(Boolean).pop()}`);
+    return redactText(s, home);
+  };
+}
+
+/** Applies f to every string in a JSON-like value, keys untouched. */
+export function mapStrings(v: unknown, f: (s: string) => string): unknown {
+  if (typeof v === "string") return f(v);
+  if (Array.isArray(v)) return v.map((x) => mapStrings(x, f));
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, f)]));
+  return v;
+}

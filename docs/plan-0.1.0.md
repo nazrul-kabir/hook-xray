@@ -32,7 +32,7 @@
 | 3. Finding groups | ✅ done |
 | 4. Terminal layout + `--expand` | ✅ done (incl. terminal path redaction) |
 | 5. Short `--sources` | ✅ done |
-| 6. Additive JSON | todo |
+| 6. Additive JSON | ✅ done (incl. Windows redaction fix) |
 | 7. Ship-gate tests | todo |
 | 8. Replica check, docs, version | todo |
 
