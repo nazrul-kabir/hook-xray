@@ -61,10 +61,13 @@ export interface GlobalState {
   allowedHttpHookUrls: string[] | null;
 }
 
+export type SourceStatus = "found" | "missing" | "unreadable" | "invalid";
+
 export interface ScannedSource {
   path: string;
   kind: SourceKind | "mods" | "global-config" | "note";
   found: boolean;
+  status: SourceStatus;
   note?: string;
 }
 
@@ -90,5 +93,5 @@ export interface Inventory {
   global: GlobalState;
   sources: ScannedSource[];
   projects: string[];
-  parseErrors: { file: string; error: string }[];
+  parseErrors: { file: string; error: string; kind?: "unreadable" | "invalid" | "schema" }[];
 }

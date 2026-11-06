@@ -13,7 +13,7 @@ function write(path: string, content: unknown) {
  * hooks.json, a manifest-referenced hooks file and a mod, a skill with frontmatter hooks, and a session mod.
  * Every rule fires at least once. Nothing here is ever executed.
  */
-export function buildFixture(opts: { disableAllHooks?: boolean } = {}) {
+export function buildFixture(opts: { disableAllHooks?: boolean; managedDisableAllHooks?: boolean } = {}) {
   const root = mkdtempSync(join(tmpdir(), "hook-xray-"));
   const home = join(root, "home");
   const project = join(root, "work", "app");
@@ -139,6 +139,7 @@ hooks:
 
   // Managed policy and a --settings file.
   write(join(managedDir, "managed-settings.json"), {
+    ...(opts.managedDisableAllHooks ? { disableAllHooks: true } : {}),
     hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "/usr/local/bin/audit-log" }] }] },
   });
   const flagFile = join(root, "launcher-settings.json");

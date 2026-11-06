@@ -9,20 +9,20 @@ import { obj, readJson } from "./fs.js";
  */
 export function addLiveSnapshot(inv: Inventory, file: string): void {
   const r = readJson(file);
-  inv.sources.push({ path: file, kind: "note", found: r.ok, note: "live snapshot from /hook-xray --save" });
+  inv.sources.push({ path: file, kind: "note", found: r.ok, status: r.ok ? "found" : r.status, note: "live snapshot from /hook-xray --save" });
   if (!r.ok) {
-    inv.parseErrors.push({ file, error: r.missing ? "live snapshot not found" : (r.error ?? "unreadable") });
+    inv.parseErrors.push({ file, error: r.missing ? "live snapshot not found" : (r.error ?? "unreadable"), ...(r.missing ? {} : { kind: r.status }) });
     return;
   }
   const snap = obj(r.value);
   if (snap.tool !== "hook-xray-live" || !Array.isArray(snap.hooks)) {
-    inv.parseErrors.push({ file, error: "not a hook-xray-live snapshot" });
+    inv.parseErrors.push({ file, error: "not a hook-xray-live snapshot", kind: "schema" });
     return;
   }
   for (const raw of snap.hooks.map(obj)) {
     const h = Handler.safeParse(raw.handler);
     if (!h.success || typeof raw.event !== "string") {
-      inv.parseErrors.push({ file, error: `live hook ${String(raw.id)} doesn't match the hooks schema` });
+      inv.parseErrors.push({ file, error: `live hook ${String(raw.id)} doesn't match the hooks schema`, kind: "schema" });
       continue;
     }
     const source = raw.source === "policy" ? "policy" : raw.source === "flag" ? "flag" : String(raw.source);

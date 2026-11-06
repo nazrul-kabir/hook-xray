@@ -16,8 +16,8 @@ export function normalized(inv: Inventory, findings: Finding[]) {
     .sort();
 }
 
-export function baselineScan(allProjects: boolean) {
-  const fx = buildFixture();
+export function baselineScan(allProjects: boolean, opts: Parameters<typeof buildFixture>[0] = {}) {
+  const fx = buildFixture(opts);
   const inv = discover({
     home: fx.home,
     cwd: fx.project,

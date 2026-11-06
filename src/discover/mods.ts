@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
-import type { ModRecord, ScannedSource } from "../types.js";
+import type { ModRecord, ScannedSource, SourceStatus } from "../types.js";
 import { isDir, listDir, obj, readJson } from "./fs.js";
 
 /** Runs `claude plugin validate --json <dir>` and returns its parsed report. Static analysis only: it never runs the module. */
@@ -82,13 +82,13 @@ export function discoverMods(
   home: string,
   plugins: { key: string; root: string }[],
   validator: Validator | null,
-  note: (path: string, kind: ScannedSource["kind"], found: boolean, n?: string) => void,
+  note: (path: string, kind: ScannedSource["kind"], status: SourceStatus, n?: string) => void,
 ): ModRecord[] {
   const candidates: { dir: string; name: string; origin: ModRecord["origin"] }[] = [];
   for (const p of plugins) candidates.push({ dir: p.root, name: p.key.split("@")[0], origin: "plugin" });
 
   const devMods = join(home, ".claude", "dev-mods");
-  note(devMods, "mods", isDir(devMods));
+  note(devMods, "mods", isDir(devMods) ? "found" : "missing");
   for (const session of listDir(devMods)) {
     const sdir = join(devMods, session);
     for (const mod of listDir(sdir)) {

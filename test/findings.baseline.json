@@ -44,5 +44,9 @@
     "UserPromptSubmit|user:|command||frequent-context-injection|warning|likely",
     "mod|deploy-tools|mod-gating-without-catch|warning|certain",
     "mod|git-branch|mod-unvalidated|info|certain"
+  ],
+  "managedDisableAllHooks": [
+    "mod|deploy-tools|mod-gating-without-catch|warning|certain",
+    "mod|git-branch|mod-unvalidated|info|certain"
   ]
 }

@@ -27,7 +27,7 @@
 | Step | State |
 |---|---|
 | 0. Findings baseline | ✅ done |
-| 1. Source status | todo |
+| 1. Source status | ✅ done (incl. managed `disableAllHooks` fix) |
 | 2. Scratch-workspace labels | todo |
 | 3. Finding groups | todo |
 | 4. Terminal layout + `--expand` | todo |
