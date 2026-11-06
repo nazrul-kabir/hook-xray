@@ -40,7 +40,7 @@ Before deciding what to trust, it helps to know what is installed.
 From a source checkout, replace `npx hook-xray` with `npx tsx src/cli.ts`.
 
 ```bash
-npx hook-xray                        # this project + user + managed + plugins
+npx hook-xray                        # this project + user + managed + plugins (run from your home folder it shows 0 projects)
 npx hook-xray --all-projects         # every project in ~/.claude.json
 npx hook-xray --event PreToolUse     # one event
 npx hook-xray --json --redact        # for sharing; see the redaction note below

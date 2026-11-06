@@ -13,6 +13,19 @@ const render = (allProjects: boolean, o: { redact?: boolean; expand?: boolean; s
   return { fx, inv, findings, text };
 };
 
+describe("zero-projects hint", () => {
+  const header = (projects: string[], allProjects: boolean) => {
+    const { inv, findings } = baselineScan(false);
+    inv.projects = projects;
+    return strip(renderTerminal(inv, findings, summarize(inv, findings), { redact: false, showSources: false, allProjects, version: "test" })).split("\n")[1]!;
+  };
+  it("explains 0 projects only when --all-projects is off", () => {
+    expect(header([], false)).toContain("0 projects  · run in a project folder or add --all-projects");
+    expect(header([], true)).not.toContain("--all-projects");
+    expect(header(["/x"], false)).not.toContain("--all-projects");
+  });
+});
+
 describe("terminal layout", () => {
   it("shows sections in order, with warnings on their own lines", () => {
     const { findings, text } = render(false);

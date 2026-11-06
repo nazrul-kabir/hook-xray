@@ -76,5 +76,5 @@ const summary = summarize(inv, findings);
 process.stdout.write(
   (o.json
     ? renderJson(inv, findings, summary, version, !!o.redact)
-    : renderTerminal(inv, findings, summary, { redact: !!o.redact, showSources: !!o.sources, expand: !!o.expand, event: o.event, version })) + "\n",
+    : renderTerminal(inv, findings, summary, { redact: !!o.redact, showSources: !!o.sources, expand: !!o.expand, event: o.event, allProjects: !!o.allProjects, version })) + "\n",
 );
