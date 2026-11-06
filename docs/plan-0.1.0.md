@@ -31,7 +31,7 @@
 | 2. Scratch-workspace labels | ✅ done (incl. Windows worktree skip) |
 | 3. Finding groups | ✅ done |
 | 4. Terminal layout + `--expand` | ✅ done (incl. terminal path redaction) |
-| 5. Short `--sources` | todo |
+| 5. Short `--sources` | ✅ done |
 | 6. Additive JSON | todo |
 | 7. Ship-gate tests | todo |
 | 8. Replica check, docs, version | todo |
@@ -170,7 +170,7 @@ With `--sources`:
 
 ## 8. Replica check, docs, version
 
-- Build a replica of a real machine's layout in a temp folder (no real content): ponytail with hooks only in a manifest-referenced `claude-codex-hooks.json`, postman, i-have-adhd, a compaction mod stub (`session.compact`, `turn.complete`, `$.http.fetch`, `$.env.get`), 9 projects including a scratch workspace. Run with the real `claude plugin validate`. Read the output as a first-time user: the ponytail every-prompt warning, the postman timeout warning and the mod must be visible without scrolling past notes.
+- Build a replica of a real machine's layout in a temp folder (no real content): ponytail with hooks only in a manifest-referenced `claude-codex-hooks.json`, postman, i-have-adhd, a compaction mod stub (`session.compact`, `turn.complete`, `$.http.fetch`, `$.env.get`), 9 projects including a scratch workspace. Run with the real `claude plugin validate`. Read the output as a first-time user: the ponytail every-prompt warning, the postman timeout note and the mod must be visible without scrolling past notes.
 - README: replace the usage example with that replica output; document `--expand`; add "In PowerShell, `npm run dev -- …` can drop the `--`; run `npx tsx src/cli.ts …` instead."
 - `package.json`: `"version": "0.1.0"`.
 - `npm test`, `npm run test:mod`, `npm run typecheck`, `npm pack --dry-run` (only `dist`, README, LICENSE).

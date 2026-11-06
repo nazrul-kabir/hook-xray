@@ -159,15 +159,33 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
     out.push("");
   }
 
+  const found = inv.sources.filter((s) => s.found).length;
   if (o.showSources) {
-    out.push(head("Sources scanned"));
-    for (const s of inv.sources) {
-      const mark = s.found ? pc.green("✓") : pc.dim("–");
-      out.push(`  ${mark} ${pc.dim(s.kind.padEnd(13))} ${r(s.path)}${s.note ? pc.dim(`  (${r(s.note)})`) : ""}`);
+    out.push(head("Sources"));
+    const mark = { found: pc.green("✓"), unreadable: pc.red("✖"), invalid: pc.red("✖"), missing: pc.dim("–") } as const;
+    for (const s of inv.sources.filter((x) => o.expand || x.status !== "missing")) {
+      const status = s.status === "found" ? "" : pc.dim(` [${s.status}]`);
+      out.push(`  ${mark[s.status]} ${pc.dim(s.kind.padEnd(13))} ${r(s.path)}${status}${s.note ? pc.dim(`  (${r(s.note)})`) : ""}`);
     }
+    out.push("");
+    // A source belongs to the longest project path that prefixes it.
+    const owns = (proj: string, path: string) => path.startsWith(proj) && "/\\".includes(path[proj.length] ?? "x");
+    const withConfig = new Set<string>();
+    for (const s of inv.sources.filter((x) => x.found && ["project", "local", "skill", "agent"].includes(x.kind))) {
+      const proj = projects.find((p) => owns(p, s.path));
+      if (proj) withConfig.add(proj);
+    }
+    const np = inv.projects.length;
+    out.push(
+      `${n(np, "project")} checked: ${withConfig.size} with .claude config, ${np - withConfig.size} without` +
+        (nScratch ? `, ${n(nScratch, "scratch workspace")} (temporary)` : ""),
+    );
+    const withHooks = new Set(inv.hooks.filter(isPlugin).map((h) => h.owner.name?.replace(/ \(disabled\)$/, "")));
+    const withHooksN = inv.pluginNames.filter((x) => withHooks.has(x)).length;
+    out.push(`${n(inv.pluginNames.length, "plugin")}: ${withHooksN} with hooks, ${inv.pluginNames.length - withHooksN} without (normal)`);
+    out.push(`managed settings: ${inv.sources.some((x) => x.kind === "managed" && x.found) ? "found" : "none found"}`);
   } else {
-    const found = inv.sources.filter((s) => s.found).length;
-    out.push(pc.dim(`${found} of ${inv.sources.length} sources present · --sources to list them · --json for the full report`));
+    out.push(pc.dim(`${found} of ${inv.sources.length} sources present · --sources for details · --json for everything`));
   }
   return out.join("\n");
 }

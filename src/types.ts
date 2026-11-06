@@ -95,5 +95,7 @@ export interface Inventory {
   projects: string[];
   /** the same projects, with scratch flagged (Claude desktop scratch workspaces are temporary) */
   projectDetails: { path: string; scratch: boolean }[];
+  /** names of installed plugins, with or without hooks */
+  pluginNames: string[];
   parseErrors: { file: string; error: string; kind?: "unreadable" | "invalid" | "schema" }[];
 }
