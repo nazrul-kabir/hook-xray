@@ -97,6 +97,7 @@ hooks:
     plugins: {
       "deploy-tools@acme": [{ scope: "user", installPath: plugin, version: "1.2.0", lastUpdated: "2026-11-01" }],
       "lint-kit@acme": [{ scope: "user", installPath: join(home, ".claude", "plugins", "cache", "acme", "lint-kit", "0.4.0"), version: "0.4.0", lastUpdated: "2026-11-01" }],
+      "off-kit@acme": [{ scope: "user", installPath: join(home, ".claude", "plugins", "cache", "acme", "off-kit", "1.0.0"), version: "1.0.0", lastUpdated: "2026-11-01" }],
     },
   });
   write(join(plugin, ".claude-plugin", "plugin.json"), { name: "deploy-tools", version: "1.2.0", hooks: "./config/extra-hooks.json" });
@@ -120,6 +121,13 @@ hooks:
       SubagentStart: [{ hooks: [{ type: "command", command: 'node "${CLAUDE_PLUGIN_ROOT}/hooks/sub.js"', timeout: 5 }] }],
       PostToolUseFailure: [{ matcher: "Bash", hooks: [{ type: "command", command: 'node "${CLAUDE_PLUGIN_ROOT}/hooks/fail.js"', timeout: 5 }] }],
     },
+  });
+
+  // A plugin that is installed but not in enabledPlugins: its hooks are listed, never linted.
+  const offKit = join(home, ".claude", "plugins", "cache", "acme", "off-kit", "1.0.0");
+  write(join(offKit, ".claude-plugin", "plugin.json"), { name: "off-kit", version: "1.0.0" });
+  write(join(offKit, "hooks", "hooks.json"), {
+    hooks: { SessionStart: [{ hooks: [{ type: "command", command: 'bash "${CLAUDE_PLUGIN_ROOT}/start.sh"' }] }] },
   });
 
   // Projects only --all-projects reaches: a Claude desktop scratch workspace, one with invalid JSON,

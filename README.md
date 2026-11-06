@@ -30,7 +30,7 @@ Before deciding what to trust, it helps to know what is installed.
 `/hooks` shows the hooks of the current session. hook-xray adds:
 
 - **Every source, before it activates**: user, project, local, managed policy, `--settings` files, plugins (`hooks/hooks.json`, inline and manifest-referenced files), and skill and subagent frontmatter, which only register once the skill or subagent runs.
-- **The exact owner** of each plugin hook.
+- **The exact owner** of each plugin hook. Hooks of a disabled plugin are listed as `(disabled)` but never linted or counted in findings, since they don't run.
 - **Mods**: plugins with a hooks module, including session mods in `~/.claude/dev-mods/`, with the events, API calls and env/state access `claude plugin validate` reports.
 - **Config lint**: hooks that never run, run twice, or cost context on every prompt.
 - **Every project** with `--all-projects`. Claude desktop scratch workspaces are kept and labelled `(scratch)`; `.claude/worktrees/` folders are skipped on every OS.

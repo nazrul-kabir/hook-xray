@@ -296,7 +296,6 @@ function doubleRun(inv: Inventory): Finding[] {
   const out: Finding[] = [];
   for (const h of inv.hooks) {
     if (h.owner.kind !== "plugin" && h.owner.kind !== "skill") continue;
-    if (h.owner.name?.endsWith("(disabled)")) continue;
     const twin = settings.get(handlerKey(h));
     if (!twin) continue;
     out.push({
@@ -347,9 +346,11 @@ export function lint(inv: Inventory): Finding[] {
   const off = dis?.value === true;
   const offAll = off && dis?.from === "managed";
   const managedOnly = inv.global.allowManagedHooksOnly;
-  const live = offAll ? [] : inv.hooks.filter((h) => (!off && !managedOnly) || h.owner.kind === "managed");
+  // Hooks from a disabled plugin (or its skills and agents) never run, so nothing about them is linted.
+  const runnable = inv.hooks.filter((h) => !h.owner.name?.includes(" (disabled)"));
+  const live = offAll ? [] : runnable.filter((h) => (!off && !managedOnly) || h.owner.kind === "managed");
   const findings = live.flatMap((h) => RULES.flatMap((r) => r(h, inv)));
-  if (!off && !managedOnly) findings.push(...doubleRun(inv));
+  if (!off && !managedOnly) findings.push(...doubleRun({ ...inv, hooks: runnable }));
   findings.push(...modFindings(inv));
   return findings;
 }
