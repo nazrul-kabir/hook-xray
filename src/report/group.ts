@@ -1,4 +1,4 @@
-import type { Confidence, Finding, HookRecord, Inventory } from "../types.js";
+import type { Confidence, Finding, Inventory } from "../types.js";
 import { where } from "../lint/rules.js";
 import { NEVER_RUNS } from "./summary.js";
 
@@ -27,7 +27,7 @@ const isBlocking = (f: Finding) => NEVER_RUNS.has(f.rule) || f.rule === "double-
 
 /** Pure: groups findings for display. Does not change which findings exist. */
 export function groupFindings(inv: Inventory, findings: Finding[]): Grouped {
-  const hooks = new Map<string, HookRecord>(inv.hooks.map((h) => [h.id, h]));
+  const hooks = new Map(inv.hooks.map((h) => [h.id, h] as const));
   const isPlugin = (id?: string) => (id && hooks.get(id)?.owner.kind === "plugin" ? 1 : 0);
   const event = (id?: string) => (id && hooks.get(id)?.event) || "";
   // user's own config first, then plugins; then by event. Array.sort is stable.
@@ -45,7 +45,7 @@ export function groupFindings(inv: Inventory, findings: Finding[]): Grouped {
     else if (isBlocking(f)) blocking.push(f);
     else if (f.severity === "info") {
       const k = `${f.rule}\0${f.message}`;
-      noteMap.set(k, [...(noteMap.get(k) ?? []), f]);
+      (noteMap.get(k) ?? noteMap.set(k, []).get(k)!).push(f);
     } else warnings.push(f);
   }
 
