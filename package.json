@@ -4,6 +4,7 @@
   "description": "X-ray every Claude Code hook and mod: source, owner, trigger, config mistakes. Read-only.",
   "scripts": {
     "build": "tsc -p .",
+    "prepublishOnly": "npm run build && npm test",
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "typecheck": "tsc -p . --noEmit",
