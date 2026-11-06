@@ -25,7 +25,7 @@ export const HttpHandler = z
   .object({
     type: z.literal("http"),
     url: z.string(),
-    headers: z.record(z.string()).optional(),
+    headers: z.record(z.string(), z.string()).optional(),
     allowedEnvVars: z.array(z.string()).optional(),
     ...common,
   })
@@ -63,4 +63,4 @@ export const MatcherGroup = z
   .passthrough();
 
 /** settings.json `hooks`: event name -> matcher groups -> handlers. */
-export const HooksConfig = z.record(z.array(MatcherGroup));
+export const HooksConfig = z.record(z.string(), z.array(MatcherGroup));
