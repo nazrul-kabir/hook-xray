@@ -145,10 +145,13 @@ hooks:
   const flagFile = join(root, "launcher-settings.json");
   write(flagFile, { hooks: { Stop: [{ hooks: [{ type: "command", command: "~/.claude/stop-hook-git-check.sh" }] }] } });
 
-  projects.push(scratch, broken, odd);
+  // A git worktree under .claude/worktrees: never a project of its own, whatever the path separator.
+  const worktree = join(project, ".claude", "worktrees", "feat-x");
+  write(join(worktree, ".claude", "settings.json"), { hooks: { Stop: [{ hooks: [{ type: "command", command: "echo wt", timeout: 5 }] }] } });
+  projects.push(scratch, broken, odd, worktree);
   write(join(home, ".claude.json"), { projects: Object.fromEntries(projects.map((p) => [p, {}])) });
 
-  return { root, home, project, managedDir, plugin, devMod, flagFile, scratch, broken, odd };
+  return { root, home, project, managedDir, plugin, devMod, flagFile, scratch, broken, odd, worktree };
 }
 
 /** Stands in for `claude plugin validate --json`, using the report shape Claude Code 2.1.318 prints. */

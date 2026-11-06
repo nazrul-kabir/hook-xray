@@ -35,7 +35,7 @@ Before deciding what to trust, it helps to know what is installed.
 - **The exact owner** of each plugin hook.
 - **Mods**: plugins with a hooks module, including session mods in `~/.claude/dev-mods/`, with the events, API calls and env/state access `claude plugin validate` reports.
 - **Config lint**: hooks that never run, run twice, or cost context on every prompt.
-- **Every project** with `--all-projects`.
+- **Every project** with `--all-projects`. Claude desktop scratch workspaces are kept and labelled `(scratch)`; `.claude/worktrees/` folders are skipped on every OS.
 
 ## Usage
 

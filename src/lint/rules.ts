@@ -40,14 +40,14 @@ export function defaultTimeout(h: HookRecord): number {
   return LOWERED_DEFAULT[h.event] ?? 600;
 }
 
-export function where(h: HookRecord, shortProject = false): string {
+export function where(h: HookRecord, shortProject = false, scratch = false): string {
   const o = h.owner;
   if (o.kind === "plugin") return `plugin:${o.name}`;
   if (o.kind === "skill" || o.kind === "agent") return `${o.kind}:${o.name}`;
   if (o.kind === "flag") return o.name?.startsWith("live:") ? o.name : `--settings ${o.name}`;
   if (o.kind === "managed") return o.name?.startsWith("live:") ? o.name : `managed (${o.name})`;
   if (!o.project) return o.kind;
-  return `${o.kind} · ${shortProject ? "…/" + o.project.split(/[\\/]/).filter(Boolean).pop() : o.project}`;
+  return `${o.kind} · ${shortProject ? "…/" + o.project.split(/[\\/]/).filter(Boolean).pop() : o.project}${scratch ? " (scratch)" : ""}`;
 }
 
 /** The script files a command hook points at, resolved against the plugin root and project dir. */

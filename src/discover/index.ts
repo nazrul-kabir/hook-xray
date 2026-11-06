@@ -23,6 +23,9 @@ export function defaultManagedDir(platform = process.platform): string {
   return "/etc/claude-code";
 }
 
+const WORKTREE = /[\\/]\.claude[\\/]worktrees[\\/]/;
+export const isScratch = (p: string) => /[\\/]scratch-workspaces[\\/]/i.test(p);
+
 const real = (p: string) => {
   try {
     return realpathSync(p);
@@ -39,6 +42,7 @@ export function discover(env: Env): Inventory {
     global: { disableAllHooks: null, allowManagedHooksOnly: false, allowedHttpHookUrls: null },
     sources: [],
     projects: [],
+    projectDetails: [],
     parseErrors: [],
   };
   const settingsByLevel: { level: string; value: Record<string, unknown> }[] = [];
@@ -104,11 +108,12 @@ export function discover(env: Env): Inventory {
   const projects = new Set<string>([real(env.cwd)]);
   if (env.allProjects && claudeJson.ok) {
     for (const p of Object.keys(obj(obj(claudeJson.value).projects))) {
-      if (isDir(p) && !p.includes(`${"/"}.claude/worktrees/`) && real(p) !== real(env.home)) projects.add(real(p));
+      if (isDir(p) && !WORKTREE.test(p) && real(p) !== real(env.home)) projects.add(real(p));
     }
   }
   projects.delete(real(env.home));
   inv.projects = [...projects].sort();
+  inv.projectDetails = inv.projects.map((path) => ({ path, scratch: isScratch(path) }));
   const cwdReal = real(env.cwd);
   for (const project of inv.projects) {
     if (project === real(env.home)) continue;

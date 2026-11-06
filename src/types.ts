@@ -93,5 +93,7 @@ export interface Inventory {
   global: GlobalState;
   sources: ScannedSource[];
   projects: string[];
+  /** the same projects, with scratch flagged (Claude desktop scratch workspaces are temporary) */
+  projectDetails: { path: string; scratch: boolean }[];
   parseErrors: { file: string; error: string; kind?: "unreadable" | "invalid" | "schema" }[];
 }
