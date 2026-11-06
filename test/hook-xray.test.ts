@@ -280,6 +280,14 @@ describe("findings baseline (presentation changes must not change analysis)", ()
     }
   });
 
+  it("hooks of a disabled plugin stay in the inventory but get no findings", () => {
+    const { inv, findings } = baselineScan(false);
+    const off = inv.hooks.filter((h) => h.owner.name === "off-kit (disabled)");
+    expect(off).toHaveLength(1);
+    expect(findings.some((f) => f.hookId === off[0]!.id)).toBe(false);
+    expect(summarize(inv, findings).lines.join("\n")).not.toContain("off-kit");
+  });
+
   it("disableAllHooks in managed settings: no hook is linted, managed ones included", () => {
     const expected = JSON.parse(readFileSync(new URL("./findings.baseline.json", import.meta.url), "utf8"));
     const { inv, findings } = baselineScan(true, { managedDisableAllHooks: true });
