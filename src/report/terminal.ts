@@ -1,3 +1,4 @@
+import { isAbsolute, relative } from "node:path";
 import pc from "picocolors";
 import type { Finding, HookRecord, Inventory, ModRecord } from "../types.js";
 import { defaultTimeout, where } from "../lint/rules.js";
@@ -169,12 +170,16 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
     }
     out.push("");
     // A source belongs to the longest project path that prefixes it.
-    const owns = (proj: string, path: string) => path.startsWith(proj) && "/\\".includes(path[proj.length] ?? "x");
-    const withConfig = new Set<string>();
-    for (const s of inv.sources.filter((x) => x.found && ["project", "local", "skill", "agent"].includes(x.kind))) {
-      const proj = projects.find((p) => owns(p, s.path));
-      if (proj) withConfig.add(proj);
-    }
+    const inside = (proj: string, file: string) => {
+      const rel = relative(proj, file);
+      return !rel.startsWith("..") && !isAbsolute(rel);
+    };
+    const withConfig = new Set(
+      inv.sources
+        .filter((x) => x.found && ["project", "local", "skill", "agent"].includes(x.kind))
+        .map((s) => projects.find((p) => inside(p, s.path))),
+    );
+    withConfig.delete(undefined);
     const np = inv.projects.length;
     out.push(
       `${n(np, "project")} checked: ${withConfig.size} with .claude config, ${np - withConfig.size} without` +
