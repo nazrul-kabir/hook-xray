@@ -15,6 +15,8 @@ export interface TerminalOptions {
   expand?: boolean;
   /** set when --event filtered the hooks; mods are not scanned then, so the Mods section is skipped */
   event?: string;
+  /** --all-projects was passed */
+  allProjects?: boolean;
   version: string;
 }
 
@@ -63,7 +65,8 @@ export function renderTerminal(inv: Inventory, findings: Finding[], summary: Sum
   const plugins = new Set([...inv.hooks.filter(isPlugin).map((h) => h.owner.name), ...inv.mods.map((m) => m.plugin)]).size;
   out.push(pc.bold(`hook-xray ${o.version}`) + pc.dim("  · read-only, nothing was executed"));
   out.push(
-    [n(summary.hooks, "hook"), n(plugins, "plugin"), n(summary.mods, "mod"), n(summary.projects, "project") + (nScratch ? ` (${nScratch} scratch)` : "")].join(" · "),
+    [n(summary.hooks, "hook"), n(plugins, "plugin"), n(summary.mods, "mod"), n(summary.projects, "project") + (nScratch ? ` (${nScratch} scratch)` : "")].join(" · ") +
+      (summary.projects === 0 && !o.allProjects ? pc.dim("  · run in a project folder or add --all-projects") : ""),
   );
   const g = inv.global;
   if (g.disableAllHooks?.value)
