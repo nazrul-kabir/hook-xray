@@ -56,7 +56,7 @@ npx hook-xray --live live.json       # add hooks saved by the live-view mod
 A made-up machine with four plugins (one of them a mod) and nine projects, one of them a Claude desktop scratch workspace. Run with `--all-projects --redact`:
 
 ```text
-hook-xray 0.1.0  · read-only, nothing was executed
+hook-xray 0.1.1  · read-only, nothing was executed
 5 hooks · 4 plugins · 1 mod · 9 projects (1 scratch)
 
 1 hook likely adds context on every prompt or tool call
