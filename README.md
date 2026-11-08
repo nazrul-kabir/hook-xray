@@ -1,5 +1,7 @@
 # hook-xray
 
+[![npm](https://img.shields.io/npm/v/hook-xray)](https://www.npmjs.com/package/hook-xray) [![license](https://img.shields.io/npm/l/hook-xray)](LICENSE)
+
 **See what runs automatically.**
 
 hook-xray is a free, open-source, local tool for reviewing Claude Code hooks and mods.
